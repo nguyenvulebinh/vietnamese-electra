@@ -34,6 +34,34 @@ python setup.py install
 
 Let follow this [tutorial](https://github.com/nguyenvulebinh/vi-electra/blob/master/gen_dis_explorer.ipynb) to use the trained model. You can also play around in this [colab](https://colab.research.google.com/drive/1cBQ7FQJBDeXn8UAbB3qVyaDFZGLdYM-P) notebook.
 
+Extract features from electra:
+```python
+from electra_model_tf2 import TFElectraDis
+from tokenizers.implementations import SentencePieceBPETokenizer
+import tensorflow as tf
+
+# Create tokenizer
+tokenizer = SentencePieceBPETokenizer(
+    "./vocab/vocab.json",
+    "./vocab/merges.txt",
+)
+
+vi_electra = TFElectraDis.from_pretrained('./model_pretrained/dis/')
+
+tokenizer.add_special_tokens(["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"])
+text = "Sinh_viên trường Đại_học Bách_Khoa Hà_Nội"
+text_encode = tokenizer.encode(text)
+indices = [tokenizer.token_to_id("[CLS]")] + text_encode.ids + [tokenizer.token_to_id("[SEP]")]
+assert indices == [64002, 15429, 1782, 5111, 29625, 2052, 64003]
+
+features = vi_electra(tf.constant([indices]))
+assert features[0].shape == (7,)  # discriminator detect replaced word
+assert len(features[1]) == 13  # discriminator features (12 hidden layers + 1 output layer)
+assert features[1][-1].shape == (1, 7, 256)  # 1 sample, 7 words, 256 features dimensions
+
+
+```
+
 ## Training
 
 Please follow the root [repository](https://github.com/google-research/electra) for training model.
@@ -52,15 +80,3 @@ Before running this script, ensure put necessary files in the folders.
 
 - ./model_pretrained/raw_model checkpoint model that train from this [repository](https://github.com/google-research/electra)
 - ./model_pretrained/config_files include config file that contains model architecture (generator and discriminator models). Config file default is Electra small model.
-
-
-
-WARNING: The file models are committed using git lfs. For the instruction on how to use git lfs, please follow this [link](https://git-lfs.github.com/)
-
-Instruction to clone this project in ubuntu 
-```bash
-sudo apt-get install git-lfs
-git lfs install
-git clone https://github.com/nguyenvulebinh/vi-electra.git
-
-```
