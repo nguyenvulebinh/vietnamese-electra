@@ -217,6 +217,5 @@ checkpoints/*.pt
 *.swp
 *.swn
 .ipynb_checkpoints
-*.h5
-model.ckpt*
 .idea
+.DS_Store
